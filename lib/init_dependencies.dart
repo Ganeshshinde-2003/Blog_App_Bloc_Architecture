@@ -1,7 +1,9 @@
+import 'package:blog_app/core/common/cubits/app_user/app_user_cubit.dart';
 import 'package:blog_app/core/secretes/app_secretes.dart';
 import 'package:blog_app/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:blog_app/features/auth/data/repository/auth_repository_impl.dart';
 import 'package:blog_app/features/auth/domain/repository/auth_repository.dart';
+import 'package:blog_app/features/auth/domain/usecases/current_user.dart';
 import 'package:blog_app/features/auth/domain/usecases/user_login.dart';
 import 'package:blog_app/features/auth/domain/usecases/user_sing_up.dart';
 import 'package:blog_app/features/auth/presentation/bloc/auth_bloc.dart';
@@ -18,21 +20,30 @@ Future<void> initDependencies() async {
   );
 
   serviceLocator.registerLazySingleton(() => supabase.client);
+
+  //core
+  serviceLocator.registerLazySingleton(() => AppUserCubit());
 }
 
 void _initAuth() {
-  serviceLocator.registerFactory<AuthRemoteDataSource>(
-    () => AuthRemoteDataSourceImple(supabaseClient: serviceLocator()),
-  );
-  serviceLocator.registerFactory<AuthRepository>(
-    () => AuthRepositoryImpl(authRemoteDataSource: serviceLocator()),
-  );
-  serviceLocator.registerFactory(
-    () => UserSingUp(authRepository: serviceLocator()),
-  );
   serviceLocator
-      .registerFactory(() => UserLogin(authRepository: serviceLocator()));
-  serviceLocator.registerLazySingleton(
-    () => AuthBloc(userSingUp: serviceLocator(), userLogin: serviceLocator()),
-  );
+    ..registerFactory<AuthRemoteDataSource>(
+      () => AuthRemoteDataSourceImple(supabaseClient: serviceLocator()),
+    )
+    ..registerFactory<AuthRepository>(
+      () => AuthRepositoryImpl(authRemoteDataSource: serviceLocator()),
+    )
+    ..registerFactory(
+      () => UserSingUp(authRepository: serviceLocator()),
+    )
+    ..registerFactory(() => UserLogin(authRepository: serviceLocator()))
+    ..registerFactory(() => CurrentUser(authRepository: serviceLocator()))
+    ..registerLazySingleton(
+      () => AuthBloc(
+        userSingUp: serviceLocator(),
+        userLogin: serviceLocator(),
+        currentUser: serviceLocator(),
+        appUserCubit: serviceLocator(),
+      ),
+    );
 }
